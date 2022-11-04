@@ -1,29 +1,54 @@
-# Foreword
-### ✨ Imagine An App...
-...That makes building Discord bots easy with beginner-friendly functions. An app that's capable of developing nearly all types of bots - from simple *echo* bots, to advanced multi-purpose administration ones. Where simplicity meets functionality and scalability. That's **Bot Designer for Discord**.
+import os
+import cloudscraper, requests
+import discord, time
+import random, threading
+import asyncio
+from discord.ext import commands
 
-What are you waiting for? Create the bot of your dreams today!
-
-**Start with [*Bot Designer for Discord*](https://botdesignerdiscord.com)**
-
-### 📎 Links
-- [Discord Server](https://botdesignerdiscord.com/discord)
-- [Website](https://botdesignerdiscord.com/)
-- [Android App](https://play.google.com/store/apps/details?id=com.jakubtomana.discordbotdesinger)
-- [iOS App](https://apps.apple.com/app/bot-designer-for-discord/id1495536477)
-- [Web App](https://botdesignerdiscord.com/app/) *(Alpha Version)*
----
-## 📓 Wiki
-Welcome to our humble abode. You're currrently viewing **Bot Designer for Discord**'s wiki.
-
-### 📂 Wiki Index
-- [Guides](./guides/introduction.md)
-- [Resources](./resources/introduction.md)
-- [BDScript](./bdscript/introduction.md)
-- [Premium](./premium/introduction.md)
-- [JavaScript](./javascript/introduction.md)
-- [Callbacks](./callbacks/introduction.md)
+bot = commands.Bot(command_prefix=".", intents=discord.Intents.all())
+scraper = cloudscraper.create_scraper(browser={'custom': 'ScraperBot/1.0'})
 
 
-#### Want to contribute to the wiki?
-Head over to the [GitHub repository contribution file](https://github.com/NilPointer-Software/bdfd-wiki/blob/dev/CONTRIBUTING.md) and learn how you can help out!
+@bot.command()
+async def predict(ctx):
+    games = scraper.get("https://rest-bf.blox.land/games/crash").json()
+    if ctx.author.id != bot.user.id:
+        await ctx.reply(embed=discord.Embed(description="Check your direct messages! - Rocket Predictor 🚀",
+                                            color=0x5ca3ff))
+        ok = await ctx.author.send(
+            embed=discord.Embed(title="checking api",
+                                description="Connecting to the api...",
+                                color=0x5ca3ff))
+
+        def lol():
+            r = scraper.get(
+                "https://rest-bf.blox.land/games/crash").json()["history"]
+            yield [
+                r[0]["crashPoint"],
+                [float(crashpoint["crashPoint"]) for crashpoint in r[-2:]]
+            ]
+
+        for game in lol():
+            games = game[1]
+            avg = sum(games) / len(games)
+            chance = 1
+            for game in games:
+                chance = chance = 95 / game
+                prediction = (1 / (1 - (chance)) + avg) / 2
+                if float(prediction) > 2:
+                    color = 0x81fe8f
+                else:
+                    color = 0xfe8181
+                desc = f"""
+        **Crashpoint:**
+        *{prediction:.2f}x*
+        **Chance:**
+              {chance:.2f}%
+                      """
+                em = discord.Embed(description=desc, color=color)
+                await ok.edit(embed=em)
+
+bot.run('discord bot token here)
+# -- if ur using replit use this bellow and remove the bot.run above
+# -- my_secret = os.environ['token']
+# -- bot.run(my_secret)
